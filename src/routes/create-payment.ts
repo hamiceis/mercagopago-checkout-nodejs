@@ -1,5 +1,4 @@
 import { FastifyInstance } from "fastify"
-import { preference } from "../utils/mercadopago"
 import { CreatePaymentSchema } from "../utils/schemas"
 import { ZodTypeProvider } from "fastify-type-provider-zod"
 import { createPayment } from "../service/createPayment"

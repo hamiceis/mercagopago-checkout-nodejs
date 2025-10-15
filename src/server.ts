@@ -6,6 +6,7 @@ import { env } from "../env"
 
 import { createPaymentRoute } from "./routes/create-payment"
 import { webhookRoute } from "./routes/webhook"
+import { statusRoutes } from "./routes/status-routes"
 import { errorHandler } from "./errors/error-handler"
 
 
@@ -23,6 +24,7 @@ app.get("/", (req, reply) => {
 
 app.register(createPaymentRoute)
 app.register(webhookRoute)
+app.register(statusRoutes)
 
 
 app.register(cors, {
