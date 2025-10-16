@@ -5,7 +5,7 @@ import { createPayment } from "../service/createPayment"
 
 
 export async function createPaymentRoute(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().post("/payments", {
+  app.withTypeProvider<ZodTypeProvider>().post("/payments/preferences", {
     schema: {
       body: CreatePaymentSchema
     }
@@ -24,5 +24,9 @@ export async function createPaymentRoute(app: FastifyInstance) {
    })
 
     return reply.status(201).send(payment)
+  })
+
+  app.withTypeProvider<ZodTypeProvider>().post("/payment/order", {}, (req, res) => {
+    
   })
 }

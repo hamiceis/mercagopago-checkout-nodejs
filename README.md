@@ -113,7 +113,32 @@ POST /payments
 - 💳 **Cartão de Crédito**
 - 📱 **PIX**
 
-### **3. Webhook (Notificações)**
+### **3. Rotas de Status**
+```http
+GET /success
+GET /failure  
+GET /pending
+```
+
+**Query Parameters:**
+- `payment_id` (opcional)
+- `status` (opcional)
+- `external_reference` (opcional)
+- `merchant_order_id` (opcional)
+
+**Resposta (todas as rotas):**
+```json
+{
+  "message": "Pagamento aprovado com sucesso!",
+  "payment_id": "123456789",
+  "status": "approved",
+  "external_reference": "REF_123",
+  "merchant_order_id": "ORDER_123",
+  "timestamp": "2024-01-15 10:30:00"
+}
+```
+
+### **4. Webhook (Notificações)**
 ```http
 POST /webhook
 ```
@@ -221,6 +246,7 @@ src/
 │   └── README.md           # Guia detalhado de error handler
 ├── routes/
 │   ├── create-payment.ts    # Rota de criação de pagamento
+│   ├── status-routes.ts     # Rotas de status (success/failure/pending)
 │   └── webhook.ts          # Rota de webhook
 ├── service/
 │   └── createPayment.ts     # Lógica de criação de pagamento
@@ -251,8 +277,9 @@ O sistema gera logs estruturados para facilitar o debug:
 
 ```
 🛒 Criando pagamento: { title: 'Produto Teste', quantity: 1, unit_price: 99.9, available_methods: 'PIX e Cartão de Crédito' }
-💳 Métodos disponíveis: PIX e Cartão de Crédito
-✅ Preferência criada: { id: 'PREF_123456', init_point: 'https://...', available_methods: 'PIX e Cartão de Crédito' }
+💳 Configuração de métodos de pagamento: { excluded_payment_methods: [], excluded_payment_types: [], default_payment_method_id: 'pix' }
+📦 Dados do item: { title: 'Produto Teste', quantity: 1, unit_price: 99.9 }
+✅ Preferência criada: { id: 'PREF_123456', init_point: 'https://...', sandbox_init_point: 'https://...', available_methods: 'PIX e Cartão de Crédito' }
 ```
 
 ```
@@ -260,6 +287,13 @@ O sistema gera logs estruturados para facilitar o debug:
 💳 Processando pagamento ID: 123456789
 📊 Informações do pagamento: { id: '123456789', status: 'approved', payment_method_id: 'pix', ... }
 ✅ Pagamento APROVADO: { paymentId: '123456789', amount: 99.9 }
+```
+
+**Logs das rotas de status:**
+```
+✅ Pagamento aprovado: { payment_id: '123456789', status: 'approved', external_reference: 'REF_123', merchant_order_id: 'ORDER_123', timestamp: '2024-01-15 10:30:00' }
+❌ Pagamento rejeitado: { payment_id: '123456789', status: 'rejected', external_reference: 'REF_123', merchant_order_id: 'ORDER_123', timestamp: '2024-01-15 10:30:00' }
+⏳ Pagamento pendente: { payment_id: '123456789', status: 'pending', external_reference: 'REF_123', merchant_order_id: 'ORDER_123', timestamp: '2024-01-15 10:30:00' }
 ```
 
 ## 🎯 Fluxo de Pagamento
@@ -284,10 +318,13 @@ window.location.href = init_point
 - Preenche dados do pagamento
 - Confirma o pagamento
 
-### **3. Mercado Pago notifica via webhook**
+### **3. Cliente é redirecionado**
+- Após o pagamento, cliente é redirecionado para suas URLs de retorno
+- URLs disponíveis: `/success`, `/failure`, `/pending`
+
+### **4. Mercado Pago notifica via webhook**
 - Chama automaticamente `POST /webhook`
-- Seu sistema processa o status
-- Cliente é redirecionado para suas URLs
+- Seu sistema processa o status do pagamento
 
 ## 🔒 Segurança
 
