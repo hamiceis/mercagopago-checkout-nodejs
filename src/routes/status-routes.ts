@@ -3,122 +3,100 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod"
 import dayjs from "dayjs";
 
+// Schema comum para query parameters
+const StatusQuerySchema = z.object({
+  payment_id: z.string().optional(),
+  status: z.string().optional(),
+  external_reference: z.string().optional(),
+  merchant_order_id: z.string().optional(),
+});
+
+// Schema comum para resposta
+const StatusResponseSchema = {
+  200: z.object({
+    message: z.string(),
+    payment_id: z.string().optional(),
+    status: z.string().optional(),
+    external_reference: z.string().optional(),
+    merchant_order_id: z.string().optional(),
+    timestamp: z.string(),
+  })
+};
+
+// Função helper para criar resposta
+function createStatusResponse(
+  message: string, 
+  queryParams: z.infer<typeof StatusQuerySchema>
+) {
+  return {
+    message,
+    payment_id: queryParams.payment_id,
+    status: queryParams.status,
+    external_reference: queryParams.external_reference,
+    merchant_order_id: queryParams.merchant_order_id,
+    timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss")
+  };
+}
+
+// Função helper para log
+function logPaymentStatus(
+  emoji: string, 
+  status: string, 
+  params: z.infer<typeof StatusQuerySchema>
+) {
+  console.log(`${emoji} ${status}:`, {
+    payment_id: params.payment_id,
+    status: params.status,
+    external_reference: params.external_reference,
+    merchant_order_id: params.merchant_order_id,
+    timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss")
+  });
+}
+
 export async function statusRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get("/success", {
     schema: {
-      querystring: z.object({
-        payment_id: z.string().optional(),
-        status: z.string().optional(),
-        external_reference: z.string().optional(),
-        merchant_order_id: z.string().optional(),
-      }),
-      response: z.object({
-        message: z.string(),
-        payment_id: z.string().optional(),
-        status: z.string().optional(),
-        timestamp: z.string(),
-      })
+      querystring: StatusQuerySchema,
+      response: StatusResponseSchema
     }
   }, async (request, reply) => {
-    const { 
-      payment_id, 
-      status, 
-      external_reference, 
-      merchant_order_id 
-    } = request.query;
+    const queryParams = request.query;
+    
+    logPaymentStatus("✅", "Pagamento aprovado", queryParams);
 
-    console.log("✅ Pagamento aprovado:", {
-      payment_id,
-      status,
-      external_reference,
-      merchant_order_id,
-      timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss")
-    });
-
-    return reply.status(200).send({
-      message: "Pagamento aprovado com sucesso!",
-      payment_id,
-      status,
-      timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss")
-    });
+    return reply.status(200).send(
+      createStatusResponse("Pagamento aprovado com sucesso!", queryParams)
+    );
   });
 
   app.withTypeProvider<ZodTypeProvider>().get("/failure", {
     schema: {
-      querystring: z.object({
-        payment_id: z.string().optional(),
-        status: z.string().optional(),
-        external_reference: z.string().optional(),
-        merchant_order_id: z.string().optional(),
-      }),
-      response: z.object({
-        message: z.string(),
-        payment_id: z.string().optional(),
-        status: z.string().optional(),
-        timestamp: z.string(),
-      })
+      querystring: StatusQuerySchema,
+      response: StatusResponseSchema
     }
   }, async (request, reply) => {
-    const { 
-      payment_id, 
-      status, 
-      external_reference, 
-      merchant_order_id 
-    } = request.query;
+    const queryParams = request.query;
+    
+    logPaymentStatus("❌", "Pagamento rejeitado", queryParams);
 
-    console.log("❌ Pagamento rejeitado:", {
-      payment_id,
-      status,
-      external_reference,
-      merchant_order_id,
-      timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss")
-    });
-
-    return reply.status(200).send({
-      message: "Pagamento foi rejeitado. Tente novamente com outro método de pagamento.",
-      payment_id,
-      status,
-      timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss")
-    });
+    return reply.status(200).send(
+      createStatusResponse("Pagamento foi rejeitado. Tente novamente com outro método de pagamento.", queryParams)
+    );
   });
 
   app.withTypeProvider<ZodTypeProvider>().get("/pending", {
     schema: {
-      querystring: z.object({
-        payment_id: z.string().optional(),
-        status: z.string().optional(),
-        external_reference: z.string().optional(),
-        merchant_order_id: z.string().optional(),
-      }),
-      response: z.object({
-        message: z.string(),
-        payment_id: z.string().optional(),
-        status: z.string().optional(),
-        timestamp: z.string(),
-      })
+      querystring: StatusQuerySchema,
+      response: StatusResponseSchema
     }
   }, async (request, reply) => {
-    const { 
-      payment_id, 
-      status, 
-      external_reference, 
-      merchant_order_id 
-    } = request.query;
+    const queryParams = request.query;
+    
+    logPaymentStatus("⏳", "Pagamento pendente", queryParams);
 
-    console.log("⏳ Pagamento pendente:", {
-      payment_id,
-      status,
-      external_reference,
-      merchant_order_id,
-      timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss")
-    });
-
-    return reply.status(200).send({
-      message: "Pagamento está sendo processado. Você receberá uma notificação quando for confirmado.",
-      payment_id,
-      status,
-      timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss")
-    });
+    return reply.status(200).send(
+      createStatusResponse("Pagamento está sendo processado. Você receberá uma notificação quando for confirmado.", queryParams)
+    );
   });
 }
 
