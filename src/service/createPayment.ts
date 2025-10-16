@@ -13,24 +13,33 @@ interface ICreatePayment {
 export async function createPayment({ title, price, quantity }: ICreatePayment) {
   // 💳 PIX: Permitir apenas PIX e cartão de crédito (cliente escolhe no Mercado Pago)
   const paymentMethods = {
-    excluded_payment_methods: [],
+    // Excluir métodos de pagamento específicos
+    excluded_payment_methods: [
+    ],
+    // Excluir tipos de pagamento
     excluded_payment_types: [
-      { id: "debit_card" },    // Excluir cartão de débito
-      { id: "ticket" },        // Excluir boleto
-      { id: "bank_transfer" }, // Excluir transferência bancária
-      { id: "digital_currency" } // Excluir moedas digitais
-    ]
+    ],
+    // Definir método padrão (opcional)
+    default_payment_method_id: "pix"
   }
 
-  // 🐛 DEBUG: Log dos métodos de pagamento disponíveis
-  console.log("💳 Métodos disponíveis: PIX e Cartão de Crédito")
+  // 🐛 DEBUG: Log da configuração de métodos de pagamento
+  console.log("💳 Configuração de métodos de pagamento:", paymentMethods)
+  
+ 
+  // 🐛 DEBUG: Log dos dados do item
+  console.log("📦 Dados do item:", {
+    title,
+    quantity,
+    unit_price: price
+  })
 
   const response = await preference.create({
     body: {
       items: [
         {
           id: crypto.randomUUID(),
-          title, 
+          title,
           quantity,
           unit_price: price,
           currency_id: "BRL"
@@ -40,9 +49,8 @@ export async function createPayment({ title, price, quantity }: ICreatePayment) 
         success: `${env.LOCALHOST}/success`,
         failure: `${env.LOCALHOST}/failure`,
         pending: `${env.LOCALHOST}/pending`,
-      },
-      auto_return: "approved",
-      ...paymentMethods // 💳 PIX: Aplicar configuração de métodos de pagamento
+      },  
+      ...paymentMethods, // 💳 PIX: Aplicar configuração de métodos de pagamento
     },
   })
 
@@ -50,8 +58,13 @@ export async function createPayment({ title, price, quantity }: ICreatePayment) 
   console.log("✅ Preferência criada:", { 
     id: response.id, 
     init_point: response.init_point,
+    sandbox_init_point: response.sandbox_init_point,
     available_methods: "PIX e Cartão de Crédito"
   })
+  
+  // 🐛 DEBUG: Log completo da resposta para verificar configurações aplicadas
+  // console.log("📋 Resposta completa do Mercado Pago:", 
+  // JSON.stringify(response, null, 2))
 
   return {
     id: response.id,
