@@ -14,7 +14,7 @@ export async function createPaymentRoute(app: FastifyInstance) {
     const { title, quantity, unit_price } = request.body
     
     // 🐛 DEBUG: Log da criação de pagamento
-    console.log("🛒 Criando pagamento:", { title, quantity, unit_price, available_methods: "PIX e Cartão de Crédito" })
+    console.log("🛒 Criando pagamento:", { title, quantity, unit_price })
     
    const payment = await createPayment({
     title, 
@@ -26,7 +26,7 @@ export async function createPaymentRoute(app: FastifyInstance) {
     return reply.status(201).send(payment)
   })
 
-  app.withTypeProvider<ZodTypeProvider>().post("/payment/order", {}, (req, res) => {
+  app.withTypeProvider<ZodTypeProvider>().post("/payments/order", {}, (req, res) => {
     
   })
 }

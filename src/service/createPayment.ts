@@ -11,20 +11,10 @@ interface ICreatePayment {
 
 
 export async function createPayment({ title, price, quantity }: ICreatePayment) {
-  // 💳 PIX: Permitir apenas PIX e cartão de crédito (cliente escolhe no Mercado Pago)
-  const paymentMethods = {
-    // Excluir métodos de pagamento específicos
-    excluded_payment_methods: [
-    ],
-    // Excluir tipos de pagamento
-    excluded_payment_types: [
-    ],
-    // Definir método padrão (opcional)
-    default_payment_method_id: "pix"
-  }
+  
 
   // 🐛 DEBUG: Log da configuração de métodos de pagamento
-  console.log("💳 Configuração de métodos de pagamento:", paymentMethods)
+  console.log("💳 Configuração de métodos de pagamento:")
   
  
   // 🐛 DEBUG: Log dos dados do item
@@ -49,8 +39,17 @@ export async function createPayment({ title, price, quantity }: ICreatePayment) 
         success: `${env.LOCALHOST}/success`,
         failure: `${env.LOCALHOST}/failure`,
         pending: `${env.LOCALHOST}/pending`,
-      },  
-      ...paymentMethods, // 💳 PIX: Aplicar configuração de métodos de pagamento
+      },
+      payment_methods: {
+        // exemplo de permitir PIX e cartão debito (tente não sobrescrever campos padrão)
+        excluded_payment_methods: [],
+        excluded_payment_types: [
+          { id: "credit_card" }, // excluir cartão de crédito
+          { id: "ticket" },       // excluir tickets / boleto / etc.
+        ],
+        //podemos deixar pagamento padrão abaixo
+        // default_payment_method_id: "pix",
+      },
     },
   })
 
