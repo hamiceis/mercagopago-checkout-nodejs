@@ -30,3 +30,22 @@ export async function createOrder(data: CreatePaymentOrderSchema) {
 
   return response
 }
+
+
+//Front-end envia uma requisição POST /orders com corpo como: 
+
+// {
+//   "type": "online",
+//   "external_reference": "pedido-123",
+//   "payer": {
+//     "email": "cliente@exemplo.com"
+//   },
+//   "payments": [
+//     {
+//       "amount": 50.0,
+//       "payment_method_id": "visa",
+//       "token": "TOKEN_DO_CARTAO",
+//       "installments": 1
+//     }
+//   ]
+// }
