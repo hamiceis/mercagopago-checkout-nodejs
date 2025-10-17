@@ -1,8 +1,8 @@
-import { CreateOrderBody, CreatePaymentOrderSchema } from "utils/schemas";
+import { CreatePaymentOrderSchema } from "utils/schemas";
 import { order } from "../utils/mercadopago"
 import { randomUUID } from "node:crypto"
 export async function createOrder(data: CreatePaymentOrderSchema) {
-  const body: CreateOrderBody = {
+  const body = {
     type: "online",
     external_reference: data.external_reference,
     payer: {

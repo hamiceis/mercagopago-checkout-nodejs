@@ -17,7 +17,7 @@ export const CreatePaymentOrderSchema = z.object({
   }),
   payments: z.array(
     z.object({
-      amount: z.number().positive(),
+      amount: z.string(),
       payment_method_id: z.string(),
       token: z.string(),
       installments: z.number().int().positive().default(1)
@@ -25,21 +25,7 @@ export const CreatePaymentOrderSchema = z.object({
   )
 })
 
-export const CreateOrderBodySchema = CreatePaymentOrderSchema.extend({
-  transactions: z.object({
-    payments: z.array(
-      z.object({
-        amount: z.string(),
-        payment_method: z.object({
-          id: z.string(),
-          type: z.string(),
-          token: z.string(),
-        }),
-        installments: z.number().int().positive(),
-      })
-    )
-  })
-});
+
 
 //Schema para webhook do Mercado Pago
 export const WebhookSchema = z.object({
@@ -57,4 +43,3 @@ export type CreatePaymentSchema = z.infer<typeof CreatePaymentSchema>
 export type WebhookSchema = z.infer<typeof WebhookSchema>
 export type PaymentStatus = z.infer<typeof PaymentStatusSchema>
 export type CreatePaymentOrderSchema = z.infer<typeof CreatePaymentOrderSchema>
-export type CreateOrderBody = z.infer<typeof CreateOrderBodySchema>;

@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify"
-import { CreateOrderBodySchema, CreatePaymentSchema } from "../utils/schemas"
+import { CreatePaymentOrderSchema, CreatePaymentSchema } from "../utils/schemas"
 import { ZodTypeProvider } from "fastify-type-provider-zod"
 import { createPayment } from "../service/createPayment"
 import { createOrder } from "service/createPaymentOrder"
@@ -29,7 +29,7 @@ export async function createPaymentRoute(app: FastifyInstance) {
  //rota quando se tem um front-end
   app.withTypeProvider<ZodTypeProvider>().post("/payments/order", {
     schema: {
-      body: CreateOrderBodySchema
+      body: CreatePaymentOrderSchema
     }
   }, async (request, reply) => {
     
