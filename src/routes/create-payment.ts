@@ -1,7 +1,8 @@
 import { FastifyInstance } from "fastify"
-import { CreatePaymentSchema } from "../utils/schemas"
+import { CreateOrderBodySchema, CreatePaymentSchema } from "../utils/schemas"
 import { ZodTypeProvider } from "fastify-type-provider-zod"
 import { createPayment } from "../service/createPayment"
+import { createOrder } from "service/createPaymentOrder"
 
 
 export async function createPaymentRoute(app: FastifyInstance) {
@@ -25,8 +26,21 @@ export async function createPaymentRoute(app: FastifyInstance) {
 
     return reply.status(201).send(payment)
   })
-
-  app.withTypeProvider<ZodTypeProvider>().post("/payments/order", {}, (req, res) => {
+ //rota quando se tem um front-end
+  app.withTypeProvider<ZodTypeProvider>().post("/payments/order", {
+    schema: {
+      body: CreateOrderBodySchema
+    }
+  }, async (request, reply) => {
     
+    const data = request.body
+
+    if(!data) {
+      return reply.status(400).send({ message: "Dados invalidos" });
+    }
+
+    const order = await createOrder(data) 
+
+    return order
   })
 }

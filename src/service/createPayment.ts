@@ -58,7 +58,7 @@ export async function createPayment({ title, price, quantity }: ICreatePayment) 
     id: response.id, 
     init_point: response.init_point,
     sandbox_init_point: response.sandbox_init_point,
-    available_methods: "PIX e Cartão de Crédito"
+    available_methods: "PIX e Cartão de débito"
   })
   
   // 🐛 DEBUG: Log completo da resposta para verificar configurações aplicadas
@@ -72,3 +72,5 @@ export async function createPayment({ title, price, quantity }: ICreatePayment) 
     available_methods: "PIX e Cartão de Crédito" // 💳 PIX: Informar métodos disponíveis
   }
 }
+
+
