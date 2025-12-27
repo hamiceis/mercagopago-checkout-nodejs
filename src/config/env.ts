@@ -4,6 +4,11 @@ import { z } from "zod";
 const envSchema = z.object({
   PORT: z.coerce.number().default(3333),
 
+  // Ambiente de execução (opcional, padrão: development)
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+
   // Token de acesso do Mercado Pago (obrigatório)
   MERCADOPAGO_ACCESS_TOKEN: z
     .string()
@@ -16,7 +21,7 @@ const envSchema = z.object({
   LOCALHOST: z.string().url("LOCALHOST deve ser uma URL válida"),
 
   // URL de conexão com o banco de dados (obrigatório)
-  DATABASE_URL: z.string().url("DATABASE_URL deve ser uma URL válida"),
+  DATABASE_URL: z.string().min(1, "DATABASE_URL deve ser uma URL válida"),
 });
 
 /**
@@ -25,7 +30,7 @@ const envSchema = z.object({
  */
 export const env = envSchema.parse(process.env);
 
-/**
- * Type of environment variables (útil para testes e mocks)
- */
+
+// Type of environment variables (útil para testes e mocks)
+ 
 export type Env = z.infer<typeof envSchema>;

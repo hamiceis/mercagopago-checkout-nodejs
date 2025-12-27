@@ -1,4 +1,4 @@
-import { preference } from "utils/mercadopago";
+import { preference } from "@/utils/mercadopago";
 import crypto from "node:crypto";
 import { env } from "@/config/env";
 import { logger } from "@/shared/logger";

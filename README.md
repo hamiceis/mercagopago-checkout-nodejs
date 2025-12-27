@@ -45,7 +45,7 @@ PORT=3333
 MERCADOPAGO_ACCESS_TOKEN=
 
 # Chave pública do Mercado Pago
-PUBLIC_kEY=
+PUBLIC_KEY=
 
 # URL base da aplicação (para webhooks)
 LOCALHOST=http://localhost:3333
