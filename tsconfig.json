@@ -12,6 +12,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "ignoreDeprecations": "6.0",
     "outDir": "dist",
     "baseUrl": "./src",

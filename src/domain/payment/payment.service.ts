@@ -31,6 +31,16 @@ export const createPreference = async (
     );
   }
 
+  // Validar valor total
+  const totalAmount = data.price * data.quantity;
+  if (totalAmount > 100000) {
+    throw new AppError(
+      "Valor total não pode exceder R$ 100.000,00",
+      400,
+      ERROR_CODES.AMOUNT_TOO_HIGH
+    );
+  }
+
   logger.info("Creating payment preference", {
     title: data.title,
     quantity: data.quantity,
