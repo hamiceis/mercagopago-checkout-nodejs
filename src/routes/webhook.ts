@@ -1,17 +1,17 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { WebhookSchema, PaymentStatus } from "../utils/schemas";
+import { webhookSchema } from "@/schemas";
+import { PaymentStatus } from "@/types";
 import { payment } from "../utils/mercadopago";
 import { AppError, ERROR_CODES } from "@/shared/errors";
 import { logger } from "@/shared/logger";
-import { info } from "node:console";
 
 export const webhookRoute = async (app: FastifyInstance) => {
   app.withTypeProvider<ZodTypeProvider>().post(
     "/webhook",
     {
       schema: {
-        body: WebhookSchema,
+        body: webhookSchema,
       },
     },
     async (request, reply) => {

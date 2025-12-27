@@ -2,6 +2,7 @@ import { preference } from "utils/mercadopago";
 import crypto from "node:crypto";
 import { env } from "@/config/env";
 import { logger } from "@/shared/logger";
+import { PaymentPreference } from "@/types";
 
 interface ICreatePayment {
   title: string;
@@ -13,7 +14,7 @@ export async function createPayment({
   title,
   price,
   quantity,
-}: ICreatePayment) {
+}: PaymentPreference) {
   logger.info("Creating payment preference", { title, quantity, price });
 
   const response = await preference.create({

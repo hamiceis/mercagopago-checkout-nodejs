@@ -1,12 +1,10 @@
-import { CreatePaymentOrderSchema } from "utils/schemas";
+import { CreatePaymentOrderRequest } from "@/types";
 import { payment } from "../utils/mercadopago";
 import { randomUUID } from "node:crypto";
 import { AppError, ERROR_CODES } from "@/shared/errors";
 import { logger } from "@/shared/logger";
-
-
 //cria um pedido de pagamento quando tem um front-end
-export async function createOrder(data: CreatePaymentOrderSchema) {
+export async function createOrder(data: CreatePaymentOrderRequest) {
   try {
     if (!data.payments || data.payments.length === 0) {
       throw new AppError(

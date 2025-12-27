@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify";
-import {
-  CreatePaymentOrderSchema,
-  CreatePaymentSchema,
-} from "../utils/schemas";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
+import {
+  createPaymentSchema,
+  createPaymentOrderSchema
+} from "@/schemas";
 import { createPayment } from "../service/createPayment";
 import { createOrder } from "service/createPaymentOrder";
 import { AppError } from "@/shared/errors";
@@ -14,7 +14,7 @@ export async function createPaymentRoute(app: FastifyInstance) {
     "/payments/preferences",
     {
       schema: {
-        body: CreatePaymentSchema,
+        body: createPaymentSchema,
       },
     },
     async (request, reply) => {
@@ -36,7 +36,7 @@ export async function createPaymentRoute(app: FastifyInstance) {
     "/payments/order",
     {
       schema: {
-        body: CreatePaymentOrderSchema,
+        body: createPaymentOrderSchema,
       },
     },
     async (request, reply) => {
