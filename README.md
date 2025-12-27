@@ -1,87 +1,131 @@
-# 💳 Payments Mercado Pago
+# 💳 Payments Mercado Pago - Clean Architecture
 
-API para integração com Mercado Pago usando Fastify, TypeScript e Zod para validação.
+API RESTful para integração com Mercado Pago seguindo **Clean Architecture** com TypeScript, Fastify e Prisma v7.
+
+## 🏗️ Arquitetura
+
+```
+┌─────────────┐
+│   Routes    │  HTTP Layer (Controllers)
+│ (Fastify)   │
+└──────┬──────┘
+       │
+┌──────▼──────┐
+│   Domain    │  Business Logic
+│  Services   │
+└──────┬──────┘
+       │
+┌──────▼────────────┐
+│ Infrastructure   │  External APIs
+│  (MercadoPago)   │
+└──────────────────┘
+```
+
+### **Camadas:**
+
+- **Routes** (`src/routes/`): Controllers HTTP, validação com Zod
+- **Domain** (`src/domain/`): Lógica de negócio isolada
+- **Infrastructure** (`src/infrastructure/`): Integração com APIs externas
+- **Shared** (`src/shared/`): Utilidades compartilhadas
+
+---
 
 ## 🚀 Funcionalidades
 
-- ✅ **Criação de pagamentos** com PIX e cartão de crédito
-- ✅ **Webhook** para notificações de status de pagamento
-- ✅ **Prisma v7** com Driver Adapters (Config-Only)
-- ✅ **Validação** com Zod
+- ✅ **Checkout Pro** (redirecionamento para Mercado Pago)
+- ✅ **Checkout Transparente** (API direta)
+- ✅ **Webhooks** com processamento de status
+- ✅ **Validações robustas** (Zod + Domain rules)
+- ✅ **Clean Architecture** (testável e manutenível)
+- ✅ **Prisma v7** (Config-Only + Driver Adapters)
 - ✅ **Error Handler** global
-- ✅ **Logs estruturados** com dayjs
-- ✅ **TypeScript** para type safety
+- ✅ **Logs estruturados**
+
+---
 
 ## 📋 Pré-requisitos
 
-- Node.js 18+
-- npm ou yarn
-- Conta no Mercado Pago (sandbox para testes)
+- **Node.js** 18+
+- **npm** ou **yarn**
+- Conta no **Mercado Pago** (sandbox para testes)
+
+---
 
 ## 🛠️ Instalação
 
-### **1. Clone o repositório**
+### **1. Clone e instale**
 
 ```bash
 git clone <seu-repositorio>
 cd payments_mercadopago
-```
-
-### **2. Instale as dependências**
-
-```bash
 npm install
 ```
 
-### **3. Configure as variáveis de ambiente**
+### **2. Configure variáveis de ambiente**
 
-Crie um arquivo `.env` na raiz do projeto:
+Crie `.env` na raiz:
 
 ```env
-# Porta do servidor (opcional, padrão: 3333)
 PORT=3333
-
-# Token de acesso do Mercado Pago
-MERCADOPAGO_ACCESS_TOKEN=
-
-# Chave pública do Mercado Pago
-PUBLIC_KEY=
-
-# URL base da aplicação (para webhooks)
+MERCADOPAGO_ACCESS_TOKEN=TEST-your-token-here
+PUBLIC_KEY=TEST-your-public-key
 LOCALHOST=http://localhost:3333
+DATABASE_URL=file:./dev.db
+NODE_ENV=development
 ```
 
-### **4. Execute o projeto**
+### **3. Execute**
 
 ```bash
 npm run dev
 ```
 
-O servidor estará rodando em `http://localhost:3333`
+Servidor rodando em `http://localhost:3333` ✅
 
-## 📚 Dependências
+---
 
-### **Produção:**
+## 📁 Estrutura do Projeto
 
-- `fastify` - Framework web
-- `@fastify/cors` - CORS para Fastify
-- `fastify-type-provider-zod` - Integração Zod com Fastify
-- `mercadopago` - SDK oficial do Mercado Pago
-- `zod` - Validação de schemas
-- `dayjs` - Manipulação de datas
-- `@prisma/client` - ORM para banco de dados (v7.2.0+)
-- `@prisma/adapter-better-sqlite3` - Adaptador para SQLite na v7
-- `better-sqlite3` - Driver de banco de dados
+```
+src/
+├── routes/                 # HTTP Controllers
+│   ├── create-payment.ts   # POST /payments/preferences, /payments/order
+│   ├── status-routes.ts    # GET /success, /failure, /pending
+│   └── webhook.ts          # POST /webhook
+│
+├── domain/                 # Business Logic
+│   ├── payment/
+│   │   ├── payment.service.ts  # Validações + orquestração
+│   │   └── index.ts
+│   └── webhook/
+│       ├── webhook.service.ts  # Processamento de webhooks
+│       └── index.ts
+│
+├── infrastructure/         # External APIs
+│   └── mercadopago/
+│       ├── client.ts       # SDK config (Order, Payment, Preference)
+│       ├── mappers/
+│       │   ├── payment.mapper.ts  # Domain ↔ API conversion
+│       │   └── order.mapper.ts
+│       └── index.ts
+│
+├── shared/                 # Utilities
+│   ├── errors/             # Error handling (AppError, codes, handler)
+│   └── logger/             # Structured logging
+│
+├── schemas/                # Zod validation
+│   ├── payment.schema.ts
+│   └── webhook.schema.ts
+│
+├── types/                  # TypeScript types
+├── config/                 # Configuration (env)
+├── lib/                    # External libs (Prisma)
+└── server.ts               # App entry point
+```
 
-### **Desenvolvimento:**
+---
 
-- `typescript` - TypeScript
-- `tsx` - Executor TypeScript
-- `@types/node` - Tipos do Node.js
-- `@types/mercadopago` - Tipos do Mercado Pago
-- `prisma` - CLI do Prisma (v7.2.0+)
-
-## 🛣️ Rotas da API
+## 🛣️ API Endpoints
 
 ### **1. Health Check**
 
@@ -89,81 +133,107 @@ O servidor estará rodando em `http://localhost:3333`
 GET /
 ```
 
-**Resposta:**
+**Response:**
 
 ```json
-{
-  "message": "Hello World"
-}
+{ "message": "Hello World" }
 ```
 
-### **2. Criar Pagamento**
+### **2. Criar Preference (Checkout Pro)**
 
 ```http
-POST /payments
+POST /payments/preferences
 ```
 
-**Body:**
+**Request:**
 
 ```json
 {
-  "title": "Produto Teste",
-  "quantity": 1,
-  "unit_price": 99.9
+  "title": "Compra de Rifa",
+  "quantity": 3,
+  "unit_price": 15.5
 }
 ```
 
-**Resposta:**
+**Validações:**
+
+- `title`: 3-100 caracteres, apenas letras/números/pontuação
+- `quantity`: 1-999 unidades
+- `unit_price`: R$ 0,01 - R$ 999.999,99
+- Valor total máximo: R$ 100.000,00
+
+**Response:**
 
 ```json
 {
-  "id": "PREF_123456789",
-  "init_point": "https://www.mercadopago.com/checkout/v1/redirect?pref_id=PREF_123456789",
-  "sandbox_init_point": "https://sandbox.mercadopago.com/checkout/v1/redirect?pref_id=PREF_123456789",
+  "id": "2944586916-bce4ebf3...",
+  "init_point": "https://www.mercadopago.com/checkout/...",
+  "sandbox_init_point": "https://sandbox.mercadopago.com/...",
   "available_methods": "PIX e Cartão de Crédito"
 }
 ```
 
-**Métodos de pagamento disponíveis:**
-
-- 💳 **Cartão de Crédito**
-- 📱 **PIX**
-
-### **3. Rotas de Status**
+### **3. Criar Order (Checkout Transparente)**
 
 ```http
-GET /success
-GET /failure
-GET /pending
+POST /payments/order
 ```
 
-**Query Parameters:**
-
-- `payment_id` (opcional)
-- `status` (opcional)
-- `external_reference` (opcional)
-- `merchant_order_id` (opcional)
-
-**Resposta (todas as rotas):**
+**Request:**
 
 ```json
 {
-  "message": "Pagamento aprovado com sucesso!",
-  "payment_id": "123456789",
-  "status": "approved",
-  "external_reference": "REF_123",
-  "merchant_order_id": "ORDER_123",
-  "timestamp": "2024-01-15 10:30:00"
+  "type": "online",
+  "external_reference": "ORD-123",
+  "payer": {
+    "email": "[email protected]"
+  },
+  "payments": [
+    {
+      "amount": "50.00",
+      "payment_method_id": "pix",
+      "token": "card-token-from-frontend",
+      "installments": 1
+    }
+  ]
 }
 ```
 
-### **4. Webhook (Notificações)**
+**Validações:**
+
+- `email`: formato válido, max 255 chars
+- `amount`: número positivo, max R$ 999.999,99
+- `token`: 10-500 caracteres
+- `installments`: 1-12 parcelas
+- Max 5 métodos de pagamento por ordem
+
+**Response:**
+
+```json
+{
+  "id": "123456789",
+  "status": "pending",
+  "created_at": "2025-12-27T...",
+  "external_reference": "ORD-123",
+  "message": "Ordem de pagamento criada com sucesso"
+}
+```
+
+### **4. Status Routes**
+
+```http
+GET /success?payment_id=123&status=approved
+GET /failure?payment_id=123&status=rejected
+GET /pending?payment_id=123&status=pending
+```
+
+### **5. Webhook**
 
 ```http
 POST /webhook
 ```
 
-**Body (enviado pelo Mercado Pago):**
+**Request (enviado pelo Mercado Pago):**
 
 ```json
 {
@@ -174,46 +244,25 @@ POST /webhook
 }
 ```
 
-**Respostas possíveis:**
-
-**Pagamento Aprovado:**
+**Response:**
 
 ```json
 {
   "message": "Pagamento aprovado com sucesso!",
   "status": "approved",
   "payment_id": "123456789",
-  "amount": 99.9
+  "amount": 50.0
 }
 ```
 
-**Pagamento Rejeitado:**
+---
 
-```json
-{
-  "message": "Pagamento rejeitado",
-  "status": "rejected",
-  "payment_id": "123456789",
-  "reason": "cc_rejected_insufficient_amount"
-}
-```
+## 🧪 Exemplos de Uso
 
-**Pagamento Cancelado:**
-
-```json
-{
-  "message": "Pagamento cancelado",
-  "status": "cancelled",
-  "payment_id": "123456789"
-}
-```
-
-## 🧪 Como Testar
-
-### **1. Criar um pagamento**
+### **cURL - Criar Preference**
 
 ```bash
-curl -X POST http://localhost:3333/payments \
+curl -X POST http://localhost:3333/payments/preferences \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Produto Teste",
@@ -222,198 +271,128 @@ curl -X POST http://localhost:3333/payments \
   }'
 ```
 
-### **2. Testar webhook**
-
-```bash
-curl -X POST http://localhost:3333/webhook \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "payment",
-    "data": {
-      "id": "123456789"
-    }
-  }'
-```
-
-### **3. Testar validação (erro)**
-
-```bash
-curl -X POST http://localhost:3333/payments \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "",
-    "unit_price": -10
-  }'
-```
-
-## 🔧 Configuração do Mercado Pago
-
-### **1. Sandbox (Desenvolvimento)**
-
-- Use tokens que começam com `TEST-`
-- Use `sandbox_init_point` para testes
-- Cartões de teste disponíveis no painel
-
-### **2. Produção**
-
-- Use tokens que começam com `APP-`
-- Use `init_point` para pagamentos reais
-- Configure webhook no painel do Mercado Pago
-
-### **3. Configurar Webhook**
-
-No painel do Mercado Pago:
-
-- **URL:** `https://seuapp.com/webhook`
-- **Eventos:** `payment`
-
-## 🗄️ Banco de Dados (Prisma v7)
-
-Este projeto utiliza a nova arquitetura **Config-Only** da Prisma v7.
-
-### **Características Principais:**
-
-- **Sem URL no Schema**: O arquivo `schema.prisma` não contém informações de conexão, tornando-o mais limpo e seguro.
-- **Prisma Config**: As configurações de conexão são centralizadas no arquivo `prisma.config.ts`.
-- **Driver Adapters**: Utilizamos o `@prisma/adapter-better-sqlite3` para permitir que o motor WASM da Prisma se conecte ao SQLite via drivers JavaScript.
-
-### **Comandos Úteis:**
-
-```bash
-# Sincronizar banco e gerar cliente
-npx prisma migrate dev
-
-# Abrir interface visual do banco
-npx prisma studio
-
-# Gerar o cliente manualmente
-npx prisma generate
-```
-
-## 📁 Estrutura do Projeto
-
-```
-src/
-├── errors/
-│   ├── client-error.ts      # Classe para erros customizados
-│   ├── error-handler.ts     # Error handler global
-│   └── README.md           # Guia detalhado de error handler
-├── routes/
-│   ├── create-payment.ts    # Rota de criação de pagamento
-│   ├── status-routes.ts     # Rotas de status (success/failure/pending)
-│   └── webhook.ts          # Rota de webhook
-├── service/
-│   └── createPayment.ts     # Lógica de criação de pagamento
-├── utils/
-│   ├── mercadopago.ts      # Configuração do Mercado Pago
-│   └── schemas.ts          # Schemas de validação Zod
-├── lib/
-│   └── prisma.ts           # Configuração do Prisma
-└── server.ts               # Servidor principal
-```
-
-## 🚨 Error Handler
-
-O projeto inclui um sistema completo de tratamento de erros:
-
-- ✅ **Validação automática** com Zod
-- ✅ **Erros customizados** com ClientError
-- ✅ **Logs estruturados** com dayjs
-- ✅ **Respostas padronizadas**
-
-Para mais detalhes, consulte:
-
-- `guia-errorhandler.md` - Guia rápido
-- `src/errors/README.md` - Guia completo
-
-## 🐛 Logs de Debug
-
-O sistema gera logs estruturados para facilitar o debug:
-
-```
-🛒 Criando pagamento: { title: 'Produto Teste', quantity: 1, unit_price: 99.9, available_methods: 'PIX e Cartão de Crédito' }
-💳 Configuração de métodos de pagamento: { excluded_payment_methods: [], excluded_payment_types: [], default_payment_method_id: 'pix' }
-📦 Dados do item: { title: 'Produto Teste', quantity: 1, unit_price: 99.9 }
-✅ Preferência criada: { id: 'PREF_123456', init_point: 'https://...', sandbox_init_point: 'https://...', available_methods: 'PIX e Cartão de Crédito' }
-```
-
-```
-🔔 Webhook chamado: { type: 'payment', data: { id: '123456789' }, timestamp: '2024-01-15 10:30:00' }
-💳 Processando pagamento ID: 123456789
-📊 Informações do pagamento: { id: '123456789', status: 'approved', payment_method_id: 'pix', ... }
-✅ Pagamento APROVADO: { paymentId: '123456789', amount: 99.9 }
-```
-
-**Logs das rotas de status:**
-
-```
-✅ Pagamento aprovado: { payment_id: '123456789', status: 'approved', external_reference: 'REF_123', merchant_order_id: 'ORDER_123', timestamp: '2024-01-15 10:30:00' }
-❌ Pagamento rejeitado: { payment_id: '123456789', status: 'rejected', external_reference: 'REF_123', merchant_order_id: 'ORDER_123', timestamp: '2024-01-15 10:30:00' }
-⏳ Pagamento pendente: { payment_id: '123456789', status: 'pending', external_reference: 'REF_123', merchant_order_id: 'ORDER_123', timestamp: '2024-01-15 10:30:00' }
-```
-
-## 🎯 Fluxo de Pagamento
-
-### **1. Cliente inicia pagamento**
+### **JavaScript - Criar Order**
 
 ```javascript
-// Frontend
-const response = await fetch("/payments", {
+const response = await fetch("/payments/order", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    title: "Produto",
-    unit_price: 99.9,
+    type: "online",
+    external_reference: "ORD-" + Date.now(),
+    payer: { email: "[email protected]" },
+    payments: [
+      {
+        amount: "99.90",
+        payment_method_id: "pix",
+        token: cardToken,
+        installments: 1,
+      },
+    ],
   }),
 });
-const { init_point } = await response.json();
-window.location.href = init_point;
+const order = await response.json();
 ```
 
-### **2. Cliente paga no Mercado Pago**
+---
 
-- Escolhe entre PIX ou cartão de crédito
-- Preenche dados do pagamento
-- Confirma o pagamento
+## 🔧 Tecnologias
 
-### **3. Cliente é redirecionado**
+### **Core:**
 
-- Após o pagamento, cliente é redirecionado para suas URLs de retorno
-- URLs disponíveis: `/success`, `/failure`, `/pending`
+- **Fastify** 5.x - Framework web
+- **TypeScript** - Type safety
+- **Zod** - Runtime validation
+- **Prisma** 7.2.0+ - ORM (Config-Only)
 
-### **4. Mercado Pago notifica via webhook**
+### **Infrastructure:**
 
-- Chama automaticamente `POST /webhook`
-- Seu sistema processa o status do pagamento
+- **MercadoPago SDK** - Payment processing
+- **Better SQLite3** - Database driver
+- **Driver Adapters** - Prisma v7 connection
+
+### **Development:**
+
+- **tsx** - TypeScript executor
+- **tsconfig-paths** - Path aliases
+
+---
+
+## 🎯 Validações Implementadas
+
+### **Payment Schema:**
+
+- Título: min 3, max 100 chars, regex para caracteres permitidos
+- Quantidade: 1-999
+- Preço: R$ 0,01 - R$ 999.999,99, 2 decimais
+- Sanitização: `.trim()` em strings
+
+### **Order Schema:**
+
+- Email: validação + `.toLowerCase()` + `.trim()`
+- Amount: string validada como número positivo
+- Token: 10-500 caracteres
+- Installments: 1-12
+
+### **Domain Validations:**
+
+- Valor total máximo: R$ 100.000,00
+- Caracteres especiais bloqueados (segurança)
+
+---
+
+## 🐛 Error Codes
+
+```typescript
+VALIDATION_ERROR; // Input inválido (400)
+INVALID_PAYMENT_DATA; // Dados de pagamento inválidos (400)
+INSUFFICIENT_AMOUNT; // Valor insuficiente (400)
+AMOUNT_TOO_HIGH; // Valor acima do limite (400)
+PAYMENT_NOT_FOUND; // Pagamento não encontrado (404)
+MERCADOPAGO_API_ERROR; // Erro da API externa (500)
+INTERNAL_ERROR; // Erro interno (500)
+```
+
+---
+
+## 🗄️ Prisma v7 (Config-Only)
+
+### **Características:**
+
+- ✅ Sem URL no `schema.prisma`
+- ✅ Configuração em `prisma.config.ts`
+- ✅ Driver Adapters (better-sqlite3)
+
+### **Comandos:**
+
+```bash
+npx prisma migrate dev --name <nome>
+npx prisma studio
+npx prisma generate
+```
+
+---
 
 ## 🔒 Segurança
 
-- ✅ **Validação** de todos os inputs com Zod
-- ✅ **Error handler** para capturar erros
-- ✅ **CORS** configurado
-- ✅ **Variáveis de ambiente** para tokens sensíveis
-- ✅ **Logs** sem informações sensíveis
+- ✅ Validação em **3 camadas** (Zod, Domain, Infrastructure)
+- ✅ Sanitização de inputs (`.trim()`, `.toLowerCase()`)
+- ✅ Regex para prevenir XSS/injection
+- ✅ Limites de valores (preço, quantidade, total)
+- ✅ Error handler sem vazamento de dados sensíveis
+- ✅ Variáveis de ambiente para tokens
 
-## 📝 Scripts Disponíveis
-
-```bash
-# Desenvolvimento
-npm run dev
-
-# Build (se configurado)
-npm run build
-
-# Testes (se configurado)
-npm test
-```
+---
 
 ## 🤝 Contribuição
 
 1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
+2. Crie uma branch: `git checkout -b feature/nova-feature`
+3. Commit: `git commit -m 'Add: nova feature'`
+4. Push: `git push origin feature/nova-feature`
 5. Abra um Pull Request
+
+---
 
 ## 📄 Licença
 
@@ -421,4 +400,4 @@ ISC License
 
 ---
 
-**🚀 Projeto pronto para uso em desenvolvimento e produção!**
+**Made with ❤️ following Clean Architecture principles**
