@@ -9,11 +9,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "@fastify/cors": "^11.1.0",
     "@playwright/mcp": "^0.0.42",
-    "@prisma/client": "^6.17.1",
+    "@prisma/adapter-better-sqlite3": "^7.2.0",
+    "better-sqlite3": "^12.5.0",
     "dayjs": "^1.11.18",
     "fastify": "^5.6.1",
     "fastify-type-provider-zod": "^6.0.0",
@@ -21,9 +22,12 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@prisma/client": "^7.2.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/mercadopago": "^1.5.11",
-    "@types/node": "^24.7.2",
-    "prisma": "^6.17.1",
+    "@types/node": "^24.10.4",
+    "dotenv": "^17.2.3",
+    "prisma": "^7.2.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
