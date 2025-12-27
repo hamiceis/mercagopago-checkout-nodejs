@@ -6,6 +6,7 @@ API para integração com Mercado Pago usando Fastify, TypeScript e Zod para val
 
 - ✅ **Criação de pagamentos** com PIX e cartão de crédito
 - ✅ **Webhook** para notificações de status de pagamento
+- ✅ **Prisma v7** com Driver Adapters (Config-Only)
 - ✅ **Validação** com Zod
 - ✅ **Error Handler** global
 - ✅ **Logs estruturados** com dayjs
@@ -13,24 +14,27 @@ API para integração com Mercado Pago usando Fastify, TypeScript e Zod para val
 
 ## 📋 Pré-requisitos
 
-- Node.js 18+ 
+- Node.js 18+
 - npm ou yarn
 - Conta no Mercado Pago (sandbox para testes)
 
 ## 🛠️ Instalação
 
 ### **1. Clone o repositório**
+
 ```bash
 git clone <seu-repositorio>
 cd payments_mercadopago
 ```
 
 ### **2. Instale as dependências**
+
 ```bash
 npm install
 ```
 
 ### **3. Configure as variáveis de ambiente**
+
 Crie um arquivo `.env` na raiz do projeto:
 
 ```env
@@ -48,6 +52,7 @@ LOCALHOST=http://localhost:3333
 ```
 
 ### **4. Execute o projeto**
+
 ```bash
 npm run dev
 ```
@@ -57,28 +62,35 @@ O servidor estará rodando em `http://localhost:3333`
 ## 📚 Dependências
 
 ### **Produção:**
+
 - `fastify` - Framework web
 - `@fastify/cors` - CORS para Fastify
 - `fastify-type-provider-zod` - Integração Zod com Fastify
 - `mercadopago` - SDK oficial do Mercado Pago
 - `zod` - Validação de schemas
 - `dayjs` - Manipulação de datas
-- `@prisma/client` - ORM para banco de dados
+- `@prisma/client` - ORM para banco de dados (v7.2.0+)
+- `@prisma/adapter-better-sqlite3` - Adaptador para SQLite na v7
+- `better-sqlite3` - Driver de banco de dados
 
 ### **Desenvolvimento:**
+
 - `typescript` - TypeScript
 - `tsx` - Executor TypeScript
 - `@types/node` - Tipos do Node.js
 - `@types/mercadopago` - Tipos do Mercado Pago
-- `prisma` - CLI do Prisma
+- `prisma` - CLI do Prisma (v7.2.0+)
 
 ## 🛣️ Rotas da API
 
 ### **1. Health Check**
+
 ```http
 GET /
 ```
+
 **Resposta:**
+
 ```json
 {
   "message": "Hello World"
@@ -86,20 +98,23 @@ GET /
 ```
 
 ### **2. Criar Pagamento**
+
 ```http
 POST /payments
 ```
 
 **Body:**
+
 ```json
 {
   "title": "Produto Teste",
   "quantity": 1,
-  "unit_price": 99.90
+  "unit_price": 99.9
 }
 ```
 
 **Resposta:**
+
 ```json
 {
   "id": "PREF_123456789",
@@ -110,23 +125,27 @@ POST /payments
 ```
 
 **Métodos de pagamento disponíveis:**
+
 - 💳 **Cartão de Crédito**
 - 📱 **PIX**
 
 ### **3. Rotas de Status**
+
 ```http
 GET /success
-GET /failure  
+GET /failure
 GET /pending
 ```
 
 **Query Parameters:**
+
 - `payment_id` (opcional)
 - `status` (opcional)
 - `external_reference` (opcional)
 - `merchant_order_id` (opcional)
 
 **Resposta (todas as rotas):**
+
 ```json
 {
   "message": "Pagamento aprovado com sucesso!",
@@ -139,11 +158,13 @@ GET /pending
 ```
 
 ### **4. Webhook (Notificações)**
+
 ```http
 POST /webhook
 ```
 
 **Body (enviado pelo Mercado Pago):**
+
 ```json
 {
   "type": "payment",
@@ -156,16 +177,18 @@ POST /webhook
 **Respostas possíveis:**
 
 **Pagamento Aprovado:**
+
 ```json
 {
   "message": "Pagamento aprovado com sucesso!",
   "status": "approved",
   "payment_id": "123456789",
-  "amount": 99.90
+  "amount": 99.9
 }
 ```
 
 **Pagamento Rejeitado:**
+
 ```json
 {
   "message": "Pagamento rejeitado",
@@ -176,6 +199,7 @@ POST /webhook
 ```
 
 **Pagamento Cancelado:**
+
 ```json
 {
   "message": "Pagamento cancelado",
@@ -187,6 +211,7 @@ POST /webhook
 ## 🧪 Como Testar
 
 ### **1. Criar um pagamento**
+
 ```bash
 curl -X POST http://localhost:3333/payments \
   -H "Content-Type: application/json" \
@@ -198,6 +223,7 @@ curl -X POST http://localhost:3333/payments \
 ```
 
 ### **2. Testar webhook**
+
 ```bash
 curl -X POST http://localhost:3333/webhook \
   -H "Content-Type: application/json" \
@@ -210,6 +236,7 @@ curl -X POST http://localhost:3333/webhook \
 ```
 
 ### **3. Testar validação (erro)**
+
 ```bash
 curl -X POST http://localhost:3333/payments \
   -H "Content-Type: application/json" \
@@ -222,19 +249,46 @@ curl -X POST http://localhost:3333/payments \
 ## 🔧 Configuração do Mercado Pago
 
 ### **1. Sandbox (Desenvolvimento)**
+
 - Use tokens que começam com `TEST-`
 - Use `sandbox_init_point` para testes
 - Cartões de teste disponíveis no painel
 
 ### **2. Produção**
+
 - Use tokens que começam com `APP-`
 - Use `init_point` para pagamentos reais
 - Configure webhook no painel do Mercado Pago
 
 ### **3. Configurar Webhook**
+
 No painel do Mercado Pago:
+
 - **URL:** `https://seuapp.com/webhook`
 - **Eventos:** `payment`
+
+## 🗄️ Banco de Dados (Prisma v7)
+
+Este projeto utiliza a nova arquitetura **Config-Only** da Prisma v7.
+
+### **Características Principais:**
+
+- **Sem URL no Schema**: O arquivo `schema.prisma` não contém informações de conexão, tornando-o mais limpo e seguro.
+- **Prisma Config**: As configurações de conexão são centralizadas no arquivo `prisma.config.ts`.
+- **Driver Adapters**: Utilizamos o `@prisma/adapter-better-sqlite3` para permitir que o motor WASM da Prisma se conecte ao SQLite via drivers JavaScript.
+
+### **Comandos Úteis:**
+
+```bash
+# Sincronizar banco e gerar cliente
+npx prisma migrate dev
+
+# Abrir interface visual do banco
+npx prisma studio
+
+# Gerar o cliente manualmente
+npx prisma generate
+```
 
 ## 📁 Estrutura do Projeto
 
@@ -268,6 +322,7 @@ O projeto inclui um sistema completo de tratamento de erros:
 - ✅ **Respostas padronizadas**
 
 Para mais detalhes, consulte:
+
 - `guia-errorhandler.md` - Guia rápido
 - `src/errors/README.md` - Guia completo
 
@@ -290,6 +345,7 @@ O sistema gera logs estruturados para facilitar o debug:
 ```
 
 **Logs das rotas de status:**
+
 ```
 ✅ Pagamento aprovado: { payment_id: '123456789', status: 'approved', external_reference: 'REF_123', merchant_order_id: 'ORDER_123', timestamp: '2024-01-15 10:30:00' }
 ❌ Pagamento rejeitado: { payment_id: '123456789', status: 'rejected', external_reference: 'REF_123', merchant_order_id: 'ORDER_123', timestamp: '2024-01-15 10:30:00' }
@@ -299,30 +355,34 @@ O sistema gera logs estruturados para facilitar o debug:
 ## 🎯 Fluxo de Pagamento
 
 ### **1. Cliente inicia pagamento**
+
 ```javascript
 // Frontend
-const response = await fetch('/payments', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ 
-    title: 'Produto', 
-    unit_price: 99.90 
-  })
-})
-const { init_point } = await response.json()
-window.location.href = init_point
+const response = await fetch("/payments", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    title: "Produto",
+    unit_price: 99.9,
+  }),
+});
+const { init_point } = await response.json();
+window.location.href = init_point;
 ```
 
 ### **2. Cliente paga no Mercado Pago**
+
 - Escolhe entre PIX ou cartão de crédito
 - Preenche dados do pagamento
 - Confirma o pagamento
 
 ### **3. Cliente é redirecionado**
+
 - Após o pagamento, cliente é redirecionado para suas URLs de retorno
 - URLs disponíveis: `/success`, `/failure`, `/pending`
 
 ### **4. Mercado Pago notifica via webhook**
+
 - Chama automaticamente `POST /webhook`
 - Seu sistema processa o status do pagamento
 
