@@ -6,18 +6,19 @@ import {
 import cors from "@fastify/cors";
 
 import { env, corsConfig, HTTP_MESSAGES } from "@/config";
+import { errorHandler } from "@/shared/errors";
+import { logger } from "@/shared/logger";
 
 import { createPaymentRoute } from "./routes/create-payment";
 import { webhookRoute } from "./routes/webhook";
 import { statusRoutes } from "./routes/status-routes";
-import { errorHandler } from "./errors/error-handler";
 
 const app = Fastify();
 
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-// 🚨 ERROR: Registrar error handler global
+// 🚨 ERROR: Registrar o Error handler global
 app.setErrorHandler(errorHandler);
 
 app.register(cors, corsConfig);
@@ -36,5 +37,5 @@ app
     host: "0.0.0.0",
   })
   .then(() => {
-    console.log("Server is running on port 3333 🚀");
+    logger.info("Server started", { port: env.PORT });
   });

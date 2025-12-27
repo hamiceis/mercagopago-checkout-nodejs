@@ -1,35 +1,45 @@
 import { CreatePaymentOrderSchema } from "utils/schemas";
 import { payment } from "../utils/mercadopago";
 import { randomUUID } from "node:crypto";
-import { ClientError } from "../errors/client-error";
+import { AppError, ERROR_CODES } from "@/shared/errors";
+import { logger } from "@/shared/logger";
 
+
+//cria um pedido de pagamento quando tem um front-end
 export async function createOrder(data: CreatePaymentOrderSchema) {
   try {
-    // Validação adicional dos dados
     if (!data.payments || data.payments.length === 0) {
-      throw new ClientError(
-        "É necessário informar pelo menos um método de pagamento"
+      throw new AppError(
+        "É necessário informar pelo menos um método de pagamento",
+        400,
+        ERROR_CODES.INVALID_PAYMENT_DATA
       );
     }
 
     const results = [];
 
-    // Processar cada pagamento individualmente
-    // Nota: A API de Pagamentos do Mercado Pago processa uma transação por vez.
     for (const paymentItem of data.payments) {
       if (!paymentItem.token) {
-        throw new ClientError("Token de pagamento inválido ou não informado");
+        throw new AppError(
+          "Token de pagamento inválido ou não informado",
+          400,
+          ERROR_CODES.INVALID_PAYMENT_DATA
+        );
       }
 
       if (Number(paymentItem.amount) <= 0) {
-        throw new ClientError("Valor do pagamento deve ser maior que zero");
+        throw new AppError(
+          "Valor do pagamento deve ser maior que zero",
+          400,
+          ERROR_CODES.INSUFFICIENT_AMOUNT
+        );
       }
-
-      // Gerar chave de idempotência para cada pagamento
+      //idempotencyKey é um identificador único para cada pagamento
       const idempotencyKey = randomUUID();
-      console.log(
-        `🔑 Processando pagamento ${paymentItem.amount} - Chave: ${idempotencyKey}`
-      );
+      logger.info("Processing payment", {
+        amount: paymentItem.amount,
+        idempotencyKey,
+      });
 
       const paymentData = {
         transaction_amount: Number(paymentItem.amount),
@@ -53,31 +63,29 @@ export async function createOrder(data: CreatePaymentOrderSchema) {
       results.push(response);
     }
 
-    // Retorna o primeiro resultado para manter compatibilidade simples,
-    // ou poderia retornar um array se o frontend esperar isso.
-    // Dado o retorno original, vamos retornar o primeiro sucesso.
     return results[0];
   } catch (error: any) {
-    // Se já for um ClientError, apenas repassa
-    if (error instanceof ClientError) {
+    if (error instanceof AppError) {
       throw error;
     }
 
-    // Se for erro da API do Mercado Pago
     if (error.response && error.response.data) {
-      console.error("❌ Erro da API do Mercado Pago:", error.response.data);
+      logger.error("MercadoPago API error", { error: error.response.data });
       const message =
         error.response.data.message || "Verifique os dados informados";
       const detail = error.response.data.cause?.[0]?.description || "";
-      throw new ClientError(
-        `Erro ao processar pagamento: ${message} ${detail}`
+      throw new AppError(
+        `Erro ao processar pagamento: ${message} ${detail}`,
+        400,
+        ERROR_CODES.MERCADOPAGO_API_ERROR
       );
     }
 
-    // Erro genérico
-    console.error("❌ Erro ao criar ordem:", error);
-    throw new ClientError(
-      "Não foi possível processar o pagamento. Tente novamente mais tarde."
+    logger.error("Error creating order", { error: error.message });
+    throw new AppError(
+      "Não foi possível processar o pagamento. Tente novamente mais tarde.",
+      500,
+      ERROR_CODES.INTERNAL_ERROR
     );
   }
 }
