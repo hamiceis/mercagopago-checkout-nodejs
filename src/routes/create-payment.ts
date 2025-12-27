@@ -3,7 +3,6 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { createPaymentSchema, createPaymentOrderSchema } from "@/schemas";
 import { createPayment } from "../service/createPayment";
 import { createOrder } from "@/service/createPaymentOrder";
-import { AppError } from "@/shared/errors";
 import { logger } from "@/shared/logger";
 
 export async function createPaymentRoute(app: FastifyInstance) {
@@ -39,6 +38,7 @@ export async function createPaymentRoute(app: FastifyInstance) {
     async (request, reply) => {
       const data = request.body;
 
+      //total_amount = soma de todos os valores de amount
       logger.info("Creating payment order", {
         external_reference: data.external_reference,
         payer_email: data.payer.email,

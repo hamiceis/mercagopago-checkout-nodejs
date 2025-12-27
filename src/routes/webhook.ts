@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { webhookSchema } from "@/schemas";
 import { PaymentStatus } from "@/types";
-import { payment } from "../utils/mercadopago";
+import { mercadoPagoPayment } from "@/infrastructure/mercadopago";
 import { AppError, ERROR_CODES } from "@/shared/errors";
 import { logger } from "@/shared/logger";
 
@@ -25,8 +25,8 @@ export const webhookRoute = async (app: FastifyInstance) => {
         logger.info("Processing payment", { paymentId });
 
         try {
-          const paymentInfo = await payment.get({ id: paymentId });
-
+          const paymentInfo = await mercadoPagoPayment.get({ id: paymentId });
+          // TODO: informações do pagamento recebido
           logger.debug("Payment info retrieved", {
             id: paymentInfo.id,
             status: paymentInfo.status,

@@ -1,11 +1,8 @@
 import { CreatePaymentOrderRequest } from "@/types";
-import { payment } from "../utils/mercadopago";
-import { randomUUID } from "node:crypto";
 import { AppError, ERROR_CODES } from "@/shared/errors";
 import { logger } from "@/shared/logger";
+import { mercadoPagoPayment, OrderMapper } from "@/infrastructure/mercadopago";
 
-
-//cria um pedido de pagamento quando tem um front-end
 export async function createOrder(data: CreatePaymentOrderRequest) {
   try {
     if (!data.payments || data.payments.length === 0) {
@@ -34,26 +31,17 @@ export async function createOrder(data: CreatePaymentOrderRequest) {
           ERROR_CODES.INSUFFICIENT_AMOUNT
         );
       }
-      //idempotencyKey é um identificador único para cada pagamento
-      const idempotencyKey = randomUUID();
+
+      const idempotencyKey = OrderMapper.generateIdempotencyKey();
+
       logger.info("Processing payment", {
         amount: paymentItem.amount,
         idempotencyKey,
       });
 
-      const paymentData = {
-        transaction_amount: Number(paymentItem.amount),
-        token: paymentItem.token,
-        description: `Pagamento ref: ${data.external_reference}`,
-        installments: paymentItem.installments,
-        payment_method_id: paymentItem.payment_method_id,
-        payer: {
-          email: data.payer.email,
-        },
-        external_reference: data.external_reference,
-      };
+      const paymentData = OrderMapper.toPaymentRequest(data, paymentItem);
 
-      const response = await payment.create({
+      const response = await mercadoPagoPayment.create({
         body: paymentData,
         requestOptions: {
           idempotencyKey: idempotencyKey,
