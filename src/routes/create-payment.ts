@@ -1,8 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { createPaymentSchema, createPaymentOrderSchema } from "@/schemas";
-import { createPayment } from "../service/createPayment";
-import { createOrder } from "@/service/createPaymentOrder";
+import { PaymentService } from "@/domain/payment";
 import { logger } from "@/shared/logger";
 
 export async function createPaymentRoute(app: FastifyInstance) {
@@ -18,7 +17,8 @@ export async function createPaymentRoute(app: FastifyInstance) {
 
       logger.info("Creating payment", { title, quantity, unit_price });
 
-      const payment = await createPayment({
+      // Usar domain service
+      const payment = await PaymentService.createPreference({
         title,
         quantity,
         price: unit_price,
@@ -48,7 +48,8 @@ export async function createPaymentRoute(app: FastifyInstance) {
         ),
       });
 
-      const order = await createOrder(data);
+      // Usar domain service
+      const order = await PaymentService.createOrder(data);
 
       logger.info("Order created successfully", {
         orderId: order.id,

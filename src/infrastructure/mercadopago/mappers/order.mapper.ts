@@ -1,6 +1,7 @@
 import { CreatePaymentOrderRequest } from "@/types";
 import { randomUUID } from "node:crypto";
 
+//Front-end
 // Converte dados de domínio para request de pagamento do MercadoPago
 export const toPaymentRequest = (
   data: CreatePaymentOrderRequest,
