@@ -34,6 +34,7 @@ API RESTful para integração com Mercado Pago seguindo **Clean Architecture** c
 
 - ✅ **Checkout Pro** (redirecionamento para Mercado Pago)
 - ✅ **Checkout Transparente** (API direta)
+- ✅ **Busca de pagamento por ID** (GET /payments/:id)
 - ✅ **Webhooks** com processamento de status
 - ✅ **Validações robustas** (Zod + Domain rules)
 - ✅ **Clean Architecture** (testável e manutenível)
@@ -88,39 +89,68 @@ Servidor rodando em `http://localhost:3333` ✅
 
 ```
 src/
-├── routes/                 # HTTP Controllers
-│   ├── create-payment.ts   # POST /payments/preferences, /payments/order
-│   ├── status-routes.ts    # GET /success, /failure, /pending
-│   └── webhook.ts          # POST /webhook
+├── config/                 # Configurações
+│   ├── env.ts             # Variáveis de ambiente (Zod validation)
+│   ├── cors.config.ts     # Configuração de CORS
+│   ├── constants.ts       # Constantes da aplicação
+│   └── index.ts
 │
-├── domain/                 # Business Logic
+├── routes/                 # HTTP Controllers
+│   ├── create-payment.ts  # POST /payments/preferences, /payments/order
+│   │                      # GET /payments/:id (buscar pagamento)
+│   ├── status-routes.ts   # GET /success, /failure, /pending
+│   └── webhook.ts         # POST /webhook
+│
+├── domain/                 # Business Logic (DDD)
 │   ├── payment/
-│   │   ├── payment.service.ts  # Validações + orquestração
+│   │   ├── payment.service.ts  # Lógica de negócio de pagamentos
+│   │   │                       # - createPreference
+│   │   │                       # - createOrder
+│   │   │                       # - getPaymentById (novo)
 │   │   └── index.ts
 │   └── webhook/
 │       ├── webhook.service.ts  # Processamento de webhooks
 │       └── index.ts
 │
-├── infrastructure/         # External APIs
+├── infrastructure/         # External APIs & Integrations
 │   └── mercadopago/
-│       ├── client.ts       # SDK config (Order, Payment, Preference)
-│       ├── mappers/
-│       │   ├── payment.mapper.ts  # Domain ↔ API conversion
+│       ├── client.ts      # SDK config (Order, Payment, Preference)
+│       ├── mappers/       # Domain ↔ API conversion
+│       │   ├── payment.mapper.ts
 │       │   └── order.mapper.ts
 │       └── index.ts
 │
-├── shared/                 # Utilities
-│   ├── errors/             # Error handling (AppError, codes, handler)
-│   └── logger/             # Structured logging
+├── schemas/                # Zod Validation Schemas
+│   ├── payment.schema.ts  # Schemas para operações de pagamento
+│   ├── status.schema.ts   # Schemas para rotas de status (novo)
+│   ├── webhook.schema.ts  # Schemas para webhooks
+│   └── index.ts           # Barrel export
 │
-├── schemas/                # Zod validation
-│   ├── payment.schema.ts
-│   └── webhook.schema.ts
+├── types/                  # TypeScript Type Definitions
+│   ├── api/               # API response/request types
+│   │   ├── payment.types.ts
+│   │   └── webhook.types.ts
+│   ├── domain/            # Domain entity types
+│   │   └── payment.domain.ts
+│   └── index.ts
 │
-├── types/                  # TypeScript types
-├── config/                 # Configuration (env)
-├── lib/                    # External libs (Prisma)
-└── server.ts               # App entry point
+├── shared/                 # Shared Utilities
+│   ├── errors/            # Error Handling System
+│   │   ├── app-error.ts   # Custom error class
+│   │   ├── error-codes.ts # Error code enum
+│   │   ├── error-handler.ts  # Global error handler
+│   │   └── index.ts
+│   ├── logger/            # Structured Logging
+│   │   ├── logger.ts      # Logger implementation
+│   │   └── index.ts
+│   └── utils/             # Utility functions
+│       ├── formatters.ts
+│       └── index.ts
+│
+├── lib/                    # External Libraries
+│   └── prisma.ts          # Prisma client (v7 config)
+│
+└── server.ts               # Application entry point
 ```
 
 ---
@@ -219,7 +249,59 @@ POST /payments/order
 }
 ```
 
-### **4. Status Routes**
+### **4. Buscar Pagamento por ID**
+
+```http
+GET /payments/:id
+```
+
+**Descrição:** Busca informações detalhadas de um pagamento pelo ID.
+
+**Parâmetros:**
+
+- `id` (path): ID do pagamento (obrigatório)
+
+**Response (200 - Sucesso):**
+
+```json
+{
+  "id": 123456789,
+  "status": "approved",
+  "status_detail": "accredited",
+  "transaction_amount": 50.0,
+  "payment_method_id": "pix",
+  "payment_type_id": "bank_transfer",
+  "date_created": "2025-12-31T14:30:00.000Z",
+  "date_approved": "2025-12-31T14:30:05.000Z",
+  "external_reference": "ORDER-001",
+  "installments": 1,
+  "payer": {
+    "email": "[email protected]",
+    "identification": {
+      "type": "CPF",
+      "number": "12345678900"
+    }
+  }
+}
+```
+
+**Response (404 - Não Encontrado):**
+
+```json
+{
+  "statusCode": 404,
+  "code": "PAYMENT_NOT_FOUND",
+  "message": "Pagamento não encontrado"
+}
+```
+
+**Exemplo:**
+
+```bash
+curl http://localhost:3333/payments/123456789
+```
+
+### **5. Status Routes**
 
 ```http
 GET /success?payment_id=123&status=approved
@@ -227,7 +309,7 @@ GET /failure?payment_id=123&status=rejected
 GET /pending?payment_id=123&status=pending
 ```
 
-### **5. Webhook**
+### **6. Webhook**
 
 ```http
 POST /webhook

@@ -1,6 +1,11 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { createPaymentSchema, createPaymentOrderSchema } from "@/schemas";
+import {
+  createPaymentSchema,
+  createPaymentOrderSchema,
+  getPaymentParamsSchema,
+  getPaymentResponseSchema,
+} from "@/schemas";
 import { PaymentService } from "@/domain/payment";
 import { logger } from "@/shared/logger";
 
@@ -63,6 +68,26 @@ export async function createPaymentRoute(app: FastifyInstance) {
         external_reference: data.external_reference,
         message: "Ordem de pagamento criada com sucesso",
       });
+    }
+  );
+
+  // Rota para buscar pagamento por ID
+  app.withTypeProvider<ZodTypeProvider>().get(
+    "/payments/:id",
+    {
+      schema: {
+        params: getPaymentParamsSchema,
+        response: getPaymentResponseSchema,
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+
+      logger.info("Fetching payment", { paymentId: id });
+
+      const payment = await PaymentService.getPaymentById(id);
+
+      return reply.status(200).send(payment);
     }
   );
 }

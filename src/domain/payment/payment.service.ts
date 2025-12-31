@@ -1,5 +1,8 @@
 import { PaymentPreference, CreatePaymentOrderRequest } from "@/types";
-import { CreatePaymentResponse } from "@/types/api/payment.types";
+import {
+  CreatePaymentResponse,
+  GetPaymentResponse,
+} from "@/types/api/payment.types";
 import { AppError, ERROR_CODES } from "@/shared/errors";
 import { logger } from "@/shared/logger";
 import {
@@ -143,4 +146,78 @@ export const createOrder = async (data: CreatePaymentOrderRequest) => {
   }
 
   return results[0];
+};
+
+// Busca pagamento por ID
+export const getPaymentById = async (
+  paymentId: string
+): Promise<GetPaymentResponse> => {
+  if (!paymentId || paymentId.trim() === "") {
+    throw new AppError(
+      "ID do pagamento é obrigatório",
+      400,
+      ERROR_CODES.INVALID_PAYMENT_DATA
+    );
+  }
+
+  logger.info("Fetching payment by ID", { paymentId });
+
+  try {
+    const paymentInfo = await mercadoPagoPayment.get({ id: paymentId });
+
+    logger.info("Payment retrieved successfully", {
+      id: paymentInfo.id,
+      status: paymentInfo.status,
+    });
+
+    // Mapear resposta para o formato esperado
+    const response: GetPaymentResponse = {
+      id: paymentInfo.id!,
+      status: paymentInfo.status!,
+      status_detail: paymentInfo.status_detail || undefined,
+      transaction_amount: paymentInfo.transaction_amount!,
+      payment_method_id: paymentInfo.payment_method_id || undefined,
+      payment_type_id: paymentInfo.payment_type_id || undefined,
+      date_created: paymentInfo.date_created!,
+      date_approved: paymentInfo.date_approved || undefined,
+      external_reference: paymentInfo.external_reference || undefined,
+      installments: paymentInfo.installments || undefined,
+      payer: paymentInfo.payer
+        ? {
+            email: paymentInfo.payer.email || undefined,
+            identification: paymentInfo.payer.identification
+              ? {
+                  type: paymentInfo.payer.identification.type || undefined,
+                  number: paymentInfo.payer.identification.number || undefined,
+                }
+              : undefined,
+          }
+        : undefined,
+    };
+
+    return response;
+  } catch (error: any) {
+    logger.error("Error fetching payment", {
+      error: error.message,
+      paymentId,
+    });
+
+    if (
+      error.message?.includes("not found") ||
+      error.status === 404 ||
+      error.statusCode === 404
+    ) {
+      throw new AppError(
+        "Pagamento não encontrado",
+        404,
+        ERROR_CODES.PAYMENT_NOT_FOUND
+      );
+    }
+
+    throw new AppError(
+      "Erro ao buscar informações do pagamento",
+      500,
+      ERROR_CODES.INTERNAL_ERROR
+    );
+  }
 };

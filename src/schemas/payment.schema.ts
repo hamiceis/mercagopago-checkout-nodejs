@@ -81,3 +81,42 @@ export const createPaymentOrderSchema = z.object({
     .min(1, "Pelo menos um método de pagamento é necessário")
     .max(5, "Máximo de 5 métodos de pagamento por ordem"),
 });
+
+// Schema para buscar pagamento por ID
+export const getPaymentParamsSchema = z.object({
+  id: z
+    .string()
+    .min(1, "ID do pagamento é obrigatório")
+    .max(100, "ID do pagamento inválido"),
+});
+
+// Schema para resposta de busca de pagamento
+export const getPaymentResponseSchema = {
+  200: z.object({
+    id: z.number(),
+    status: z.string(),
+    status_detail: z.string().optional(),
+    transaction_amount: z.number(),
+    payment_method_id: z.string().optional(),
+    payment_type_id: z.string().optional(),
+    date_created: z.string(),
+    date_approved: z.string().optional(),
+    external_reference: z.string().optional(),
+    installments: z.number().optional(),
+    payer: z
+      .object({
+        email: z.string().optional(),
+        identification: z
+          .object({
+            type: z.string().optional(),
+            number: z.string().optional(),
+          })
+          .optional(),
+      })
+      .optional(),
+  }),
+  404: z.object({
+    message: z.string(),
+    code: z.string(),
+  }),
+};
